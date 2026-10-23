@@ -1,0 +1,55 @@
+spring:
+  application:
+    name: expense-tracker-api
+  mvc:
+    throw-exception-if-no-handler-found: true
+  servlet:
+    multipart:
+      # El límite para el usuario es 5 MB (≈ 120.000 movimientos, ~6 s de importación por lotes,
+      # medido), y lo aplican la pantalla de importar y nginx (5 MB + margen de cabeceras). Aquí va
+      # algo más alto a propósito: al rechazar, la API responde sin leer el resto del cuerpo y un
+      # proxy que aún lo está enviando se queda bloqueado (60 s). Con la API por encima de nginx,
+      # nada que nginx deje pasar llega a rechazarse aquí. Por encima de 6 MB responde 413.
+      max-file-size: 6MB
+      max-request-size: 6MB
+  web:
+    resources:
+      add-mappings: false
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:expensetracker}
+    username: ${DB_USERNAME:expensetracker}
+    password: ${DB_PASSWORD:expensetracker}
+    hikari:
+      # Sin base de datos cada petición esperaba 30 s (el valor por defecto) antes de fallar. Con
+      # 5 s el usuario recibe el 503 enseguida; con la BD en marcha, una conexión tarda milisegundos.
+      connection-timeout: 5000
+  jpa:
+    open-in-view: false
+    hibernate:
+      # Flyway es la única fuente de verdad del esquema; Hibernate solo valida que las
+      # entidades coincidan con lo que ya crearon las migraciones, nunca lo genera.
+      ddl-auto: validate
+  flyway:
+    locations: classpath:db/migration
+
+springdoc:
+  # Sin esto springdoc publica las respuestas como "*/*" y el cliente generado del frontend las
+  # pide como Blob en vez de JSON.
+  default-produces-media-type: application/json
+  # Activos a propósito: Swagger UI forma parte del entregable y el frontend genera su cliente desde
+  # /v3/api-docs. Declararlo evita el aviso de "activo por defecto" al arrancar.
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    # Grupos en orden alfabético; sin esto salen en un orden arbitrario.
+    tags-sorter: alpha
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: when-authorized

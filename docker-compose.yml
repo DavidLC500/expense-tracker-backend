@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME:-expensetracker}
+      POSTGRES_USER: ${DB_USERNAME:-expensetracker}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-expensetracker}
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-expensetracker}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-expensetracker}
+      DB_USERNAME: ${DB_USERNAME:-expensetracker}
+      DB_PASSWORD: ${DB_PASSWORD:-expensetracker}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Frontend Angular servido con nginx; reenvía /api a la API. Repositorio hermano de este.
+  frontend:
+    build: ../expense-tracker-frontend
+    ports:
+      - "8081:8080"
+    depends_on:
+      - api
+
+volumes:
+  db-data:

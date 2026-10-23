@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    name: Build, test & quality gates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Grant execute permission to mvnw
+        run: chmod +x mvnw
+
+      # mvnw verify encadena: compilación, tests unitarios y de integración (Testcontainers
+      # levanta su propio Postgres contra el Docker ya disponible en el runner), ArchUnit,
+      # Spotless, Checkstyle, SpotBugs y el umbral de cobertura de JaCoCo.
+      - name: Run ./mvnw verify
+        run: ./mvnw --batch-mode --no-transfer-progress verify
+
+      - name: Upload JaCoCo report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: target/site/jacoco/
+          retention-days: 7
+
+      # Build de la imagen Docker (sin publicarla): confirma que el Dockerfile sigue
+      # funcionando en cada push/PR, no solo en local.
+      - name: Build Docker image
+        run: docker build -t expense-tracker-api:ci .

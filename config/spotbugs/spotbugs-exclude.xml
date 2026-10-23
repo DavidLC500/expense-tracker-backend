@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Filtro de exclusiones de SpotBugs para Expense Tracker API.
+
+  Solo falsos positivos conocidos, cada uno lo más acotado posible (clase, patrón y campo) y con
+  su motivo. Nada de excluir un patrón entero o un paquete.
+-->
+<FindBugsFilter>
+  <!--
+    EI_EXPOSE_REP2 en el constructor de JpaBudgetRepository: el campo jpaRepository es el
+    repositorio de Spring Data que inyecta Spring (un proxy singleton), no un valor que el adaptador
+    deba copiar para protegerse. SpotBugs lo considera "mutable" porque BudgetJpaRepository declara
+    un método que empieza por delete (deleteByCategoryIdAndMonth).
+  -->
+  <Match>
+    <Class name="com.expensetracker.infrastructure.adapter.out.persistence.JpaBudgetRepository" />
+    <Bug pattern="EI_EXPOSE_REP2" />
+    <Field name="jpaRepository" />
+  </Match>
+</FindBugsFilter>

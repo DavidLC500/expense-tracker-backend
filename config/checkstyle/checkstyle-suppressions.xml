@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<suppressions>
+  <!--
+    ArchUnit recomienda nombrar cada regla como un campo "static final ArchRule" en
+    lowerCamelCase autodescriptivo (p. ej. domainShouldNotDependOnApplication), en vez de
+    SCREAMING_SNAKE_CASE. ConstantName exige SCREAMING_SNAKE_CASE para cualquier "static
+    final"; aqui perjudicaria la legibilidad sin aportar valor, asi que se suprime solo
+    para este fichero.
+  -->
+  <suppress checks="ConstantName" files="ArchitectureTest\.java" />
+</suppressions>
